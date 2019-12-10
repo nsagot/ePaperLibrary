@@ -3,25 +3,29 @@ ePaperLibrary for Waveshare e-Paper 2.7" Raspberry HAT
 
 Github: https://github.com/lyoko17220/ePaperLibrary
 """
+import time
 
 from PIL import Image, ImageFont, ImageDraw, ImageChops
+import os
 
 import waveshare_library.epd2in7
 
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # Default font
-FONT_PATH            = 'FreeMonoBold.ttf'
-FONT_SMALL_MAX       = ImageFont.truetype(FONT_PATH, 12)
-FONT_SMALL           = ImageFont.truetype(FONT_PATH, 14)
-FONT_NORMAL          = ImageFont.truetype(FONT_PATH, 18)
-FONT_BIG             = ImageFont.truetype(FONT_PATH, 22)
+FONT_PATH = os.path.join(ROOT_DIR, 'FreeMonoBold.ttf')
+FONT_SMALL_MAX = ImageFont.truetype(FONT_PATH, 12)
+FONT_SMALL = ImageFont.truetype(FONT_PATH, 14)
+FONT_NORMAL = ImageFont.truetype(FONT_PATH, 18)
+FONT_BIG = ImageFont.truetype(FONT_PATH, 22)
 
 # Colors
-BLACK                = 0
-WHITE                = 255
+BLACK = 0
+WHITE = 255
 
 # Size (Portrait mode)
-DEVICE_WIDTH         = 176
-DEVICE_HEIGHT        = 264
+DEVICE_WIDTH = 176
+DEVICE_HEIGHT = 264
 
 
 class EPScreen():
@@ -36,8 +40,8 @@ class EPScreen():
 		self.width = None
 		self.height = None
 
-		self.image_live = None
-		self.image_old = None
+		self.image_live = None  # Currently showed/worked
+		self.image_old = None  # Old copy to compare
 		self.draw = None
 
 		if screen_orientation in ('landscape', 'portrait'):
@@ -58,22 +62,25 @@ class EPScreen():
 			self.width = DEVICE_HEIGHT
 			self.height = DEVICE_WIDTH
 
-		self.image_live = Image.new('1', (self.width, self.height), 255)
+		if self.image_live is None:
+			self.image_live = Image.new('1', (self.width, self.height), 255)
+
 		self.draw = ImageDraw.Draw(self.image_live)
 
-	def update_screen(self):
+	def update_screen(self, force=False):
 		"""
 		Send the new image to HAT
 		:return: Screen reloaded or not
 		"""
 
-		if self.image_old is None or self.need_to_refresh():
+		if self.image_old is None or self.need_to_refresh() or force:
 			if self.screen_orientation == 'landscape':
-				self.device.display_frame(self.device.get_frame_buffer(self.image_live.rotate(90, expand=1)))
+				self.device.display(self.device.getbuffer(self.image_live.rotate(90, expand=1)))
 			else:
-				self.device.display_frame(self.device.get_frame_buffer(self.image_live))
+				self.device.display(self.device.getbuffer(self.image_live))
 			self.image_old = self.image_live
 			self.init_image()
+			time.sleep(2)
 			return True
 
 	def need_to_refresh(self):
@@ -82,7 +89,7 @@ class EPScreen():
 		:return False or True
 		"""
 
-		return ImageChops.difference(self.image_live, self.image_old).getbbox() is None
+		return ImageChops.difference(self.image_live, self.image_old).getbbox() is not None
 
 	def get_width(self):
 		"""
@@ -124,7 +131,7 @@ class EPScreen():
 		if h - h_origin > 5:
 			offset_y = h - h_origin
 
-		self.draw.text((offset_x + (width) / 2 - w / 2, y - offset_y), text, font=font, fill=fill)
+		self.draw.text((offset_x + width / 2 - w / 2, y - offset_y), text, font=font, fill=fill)
 
 	def set_title(self, text):
 		"""
@@ -155,3 +162,11 @@ class EPScreen():
 		"""
 
 		self.draw.line((pos[0], pos[1], pos[2], pos[3]), fill=BLACK)
+
+	def clean_screen(self):
+		"""
+		Clean content of screen
+		"""
+		self.image_live = None
+		self.init_image()
+		self.update_screen()

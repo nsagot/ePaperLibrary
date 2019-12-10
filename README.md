@@ -4,6 +4,14 @@ Simple library to use the [Waveshare 2.7inch e-Paper HAT](https://www.waveshare.
 
 This ePaper hat is cheap compared to the PaPiRus e-Paper hat. The only problem is that this device hasn't simple library, so hello there.
 
+ ---
+
+**Update v1.1**: 
+ - Latest Waveshare libraries (speed up of refresh time)
+ - update_screen not working properly
+ - Clear screen function
+ 
+ ---
 
 
 **Features**:
@@ -14,13 +22,10 @@ This ePaper hat is cheap compared to the PaPiRus e-Paper hat. The only problem i
 - Not physical refresh if same image
 
 
-
-
 **ToDo**:
 
 - Show the calculated image when you don't have the Hat available *Soon*
 - Add images
-
   ​
 
 
